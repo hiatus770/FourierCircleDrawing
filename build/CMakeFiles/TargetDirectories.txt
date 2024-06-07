@@ -1,0 +1,3 @@
+/home/hiatus/Documents/FourierOpengl/build/CMakeFiles/GraphicsStuff.dir
+/home/hiatus/Documents/FourierOpengl/build/CMakeFiles/edit_cache.dir
+/home/hiatus/Documents/FourierOpengl/build/CMakeFiles/rebuild_cache.dir
