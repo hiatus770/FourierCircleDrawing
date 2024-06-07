@@ -45,9 +45,6 @@ void processInput(GLFWwindow *window);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods);
 
-std::vector<float> metaballs = {}; // These just contain the x and y coordinate of the center along with the scaling factor!
-std::vector<glm::vec2> metaballsVel;
-void updateMetaballs();
 
 // timing
 float deltaTime = 0.0f; // time between current frame and last frame
@@ -64,7 +61,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // This means we do not use any backwards compatible features, so its a smaller set of all of OPENGL
 
     // Creating the window object
-    GLFWwindow *window = glfwCreateWindow(SRC_WIDTH, SRC_HEIGHT, "Balls!", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(SRC_WIDTH, SRC_HEIGHT, "Fourier OpenGL Demo 1.0", NULL, NULL);
 
     if (window == NULL)
     {
@@ -93,27 +90,9 @@ int main()
     glfwSetScrollCallback(window, scroll_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
 
-    ComputeShader computeShader(std::string(HOME_DIRECTORY + std::string("/src/shaders/compute.vs")).c_str());
-
     // Important vectors to track
     std::vector<float> positions;
     std::vector<float> outputPositions;
-
-    metaballs.push_back(1920 / 2 - rand() % (1920));
-    metaballs.push_back(1080 / 2 - rand() % (1080));
-    metaballs.push_back(5);
-    metaballs.push_back(0);
-    metaballsVel.push_back(glm::vec2(5 - rand() % 10, 5 - rand() % 10));
-
-    srand(glfwGetTime());
-    for (int i = 0; i < 20; i++)
-    {
-        metaballs.push_back(1920 / 2 - rand() % (1920));
-        metaballs.push_back(1080 / 2 - rand() % (1080));
-        metaballs.push_back(10 + rand() % 20);
-        metaballs.push_back(0);
-        metaballsVel.push_back(glm::vec2(15 - rand() % 30, 15 - rand() % 30));
-    }
 
     for (int i = 0; i < X_AMOUNT; i++)
     {
@@ -123,25 +102,6 @@ int main()
             positions.push_back(j * DELTA_L - SRC_HEIGHT / 2);
         }
     }
-
-    unsigned int positionSSBO;
-    glGenBuffers(1, &positionSSBO);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, positionSSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, positions.size() * sizeof(float), positions.data(), GL_STATIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, positionSSBO);
-
-    // Metaballs SSBO
-    unsigned int metaballsSSBO;
-    glGenBuffers(1, &metaballsSSBO);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, metaballsSSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, metaballs.size() * sizeof(float), metaballs.data(), GL_DYNAMIC_READ);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, metaballsSSBO);
-
-    unsigned int outputPositionSSBO;
-    glGenBuffers(1, &outputPositionSSBO);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, outputPositionSSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, positions.size() * 4 * sizeof(float), NULL, GL_DYNAMIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, outputPositionSSBO);
 
     Shader globalShader(
         std::string(R"(#version 430 core
@@ -174,7 +134,6 @@ void main()
     Shader modifiedGridShader(std::string(HOME_DIRECTORY + std::string("/src/shaders/modifiedVert.vs")).c_str(), std::string(HOME_DIRECTORY + std::string("/src/shaders/frag.fs")).c_str());
 
     // Object metaballRenderer(&globalShader, {0.0f, 0.0f, 1080.0f, 0.0f, 1920.0f, 1080.0f});
-    Object metaballRenderer(&globalShader, {0.0f, 0.0f, 1080.0f / 2, 0.0f, 1920.0f / 2, 1080.0f / 2}, {0.0f, 121 / 255.0f, 241 / 255.0f, 1.0f});
     Object windowObject(&normalGlobalShader, {-1920.0f / 2, -1080.0f / 2, 1920.0f / 2, -1080.0f / 2, 1920.0f / 2, 1080.0f / 2, -1920.0f / 2, 1080.0f / 2}, {1.0f, 0.0f, 1.0f, 1.0f});
 
     // GRID SPACING DEBUG / DEMO CODE
@@ -234,11 +193,7 @@ void main()
  
 
 
-        if (debug)
-        {
-            gridObject.render(camera.getViewMatrix(), camera.getProjectionMatrix(), GL_LINES);
-            // windowObject.render(camera.getViewMatrix(), camera.getProjectionMatrix(), GL_LINES);
-        }
+        gridObject.render(camera.getViewMatrix(), camera.getProjectionMatrix(), GL_LINES);
 
         glfwSwapBuffers(window); // Swaps the color buffer that is used to render to during this render iteration and show it ot the output screen
         glfwPollEvents();        // Checks if any events are triggered, updates the window state andcalls the corresponding functions
