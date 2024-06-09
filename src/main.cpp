@@ -18,7 +18,6 @@ const int X_AMOUNT = 1920 / 5;
 const int Y_AMOUNT = 1080 / 10;
 const float COUNT = 384 / 2;
 float DELTA_L = SRC_WIDTH / COUNT;
-// float DELTA_L = 5.0f;
 
 #include "camera.h"
 
@@ -32,8 +31,11 @@ bool autoscale = false;
 #include "compute.h"
 #include "particle.h"
 #include <time.h>
+#include "rotator.h" // Requires camera to be initialized for it to work
+#include "fourier.h" 
+#include "plotter.h" 
 
-std::string HOME_DIRECTORY = "/home/hiatus/Documents/Metaballs";
+std::string HOME_DIRECTORY = "/home/hiatus/Documents/FourierCircleDrawing";
 
 // Whenever the window is changed this function is called
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
@@ -43,6 +45,7 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void processInput(GLFWwindow *window);
 // Scrol callback
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
+// Mouse callback
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods);
 
 
@@ -50,10 +53,12 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 float deltaTime = 0.0f; // time between current frame and last frame
 float lastFrame = 0.0f;
 
+Plotter *plotter; 
+NestedCircles *fourierDrawer; 
+Object *fourierPathDrawer; 
+
 int main()
 {
-    std::cout << "Making Window!" << std::endl;
-
     // ------------ OPENGL INTIALIZATION ----------------------
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);                 // The major version so x.x the first x
@@ -83,7 +88,7 @@ int main()
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     glEnable(GL_DEPTH_TEST);
-    glLineWidth(3.0f);
+    glLineWidth(1.0f);
 
     // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetCursorPosCallback(window, mouse_callback);
@@ -102,39 +107,9 @@ int main()
             positions.push_back(j * DELTA_L - SRC_HEIGHT / 2);
         }
     }
-
-    Shader globalShader(
-        std::string(R"(#version 430 core
-
-layout(binding = 2, std430) buffer outputpositions {
-    vec2 outputPositions[];
-};
-
-uniform mat4 model; 
-uniform mat4 view; 
-uniform mat4 projection; 
-uniform vec3 cameraPos;
-
-void main()
-{ 
-    vec2 bPos = outputPositions[gl_InstanceID * 2 + gl_VertexID]; 
-    gl_Position = projection * view * vec4(bPos.x, bPos.y, 0.0, 1.0);
-})"),
-        std::string(R"(#version 430 core
-out vec4 FragColor;
-
-uniform vec4 color = vec4(1.0, 121/255.0, 241/255.0, 1.0); 
-
-void main()
-{ 
-    FragColor = color; 
-})"));
-
     Shader normalGlobalShader(std::string(HOME_DIRECTORY + std::string("/src/shaders/regularVert.vs")).c_str(), std::string(HOME_DIRECTORY + std::string("/src/shaders/frag.fs")).c_str());
     Shader modifiedGridShader(std::string(HOME_DIRECTORY + std::string("/src/shaders/modifiedVert.vs")).c_str(), std::string(HOME_DIRECTORY + std::string("/src/shaders/frag.fs")).c_str());
 
-    // Object metaballRenderer(&globalShader, {0.0f, 0.0f, 1080.0f, 0.0f, 1920.0f, 1080.0f});
-    Object windowObject(&normalGlobalShader, {-1920.0f / 2, -1080.0f / 2, 1920.0f / 2, -1080.0f / 2, 1920.0f / 2, 1080.0f / 2, -1920.0f / 2, 1080.0f / 2}, {1.0f, 0.0f, 1.0f, 1.0f});
 
     // GRID SPACING DEBUG / DEMO CODE
     std::vector<float> grid;
@@ -155,6 +130,12 @@ void main()
 
     Object gridObject(&modifiedGridShader, grid, {1.0f, 1.0f, 1.0f, 1.0f});
 
+    Rotator rotator(0, 50, 100, 100, 1); 
+
+    fourierPathDrawer = new Object(&normalGlobalShader); 
+
+    fourierDrawer = new NestedCircles(); 
+    plotter = new Plotter(); // Handles mouse input for drawing 
 
     // Main Loop of the function
     while (!glfwWindowShouldClose(window))
@@ -185,15 +166,22 @@ void main()
         xpos = xpos * (SRC_WIDTH / (2.0 * zoomLevel)) + camera.position.x;
         ypos = ypos * (SRC_HEIGHT / (2.0 * zoomLevel)) + camera.position.y;
 
+        int timeMod = 10; 
+
+        plotter->renderPoints(); 
+        fourierDrawer->render(glfwGetTime()/(float)timeMod); 
         
-        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT))
-        {
+        if (fourierDrawer->calculated == true){
+            fourierPathDrawer->vertices.push_back(fourierDrawer->tipX); 
+            fourierPathDrawer->vertices.push_back(fourierDrawer->tipY);
         }
-
- 
-
-
-        gridObject.render(camera.getViewMatrix(), camera.getProjectionMatrix(), GL_LINES);
+        fourierPathDrawer->render(camera.getViewMatrix(), camera.getProjectionMatrix(), GLPOINTS); 
+        
+        std::cout << (int)glfwGetTime()%10 << " " << glfwGetTime() << std::endl; 
+        if (((int)glfwGetTime())%timeMod == 0 && glfwGetTime() - (int)glfwGetTime() < 0.01){
+            fourierPathDrawer->vertices.clear(); 
+        }
+        // gridObject.render(camera.getViewMatrix(), camera.getProjectionMatrix(), GL_LINES);
 
         glfwSwapBuffers(window); // Swaps the color buffer that is used to render to during this render iteration and show it ot the output screen
         glfwPollEvents();        // Checks if any events are triggered, updates the window state andcalls the corresponding functions
@@ -239,13 +227,14 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 // Mouse button callback
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 {
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    plotter->handleMouseInput(window, button, action, mods); 
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
         isDragging = true;
         glfwGetCursorPos(window, &lastX, &lastY);
     }
 
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE)
     {
         isDragging = false;
     }
@@ -254,6 +243,7 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 // Mouse movement callback
 void mouse_callback(GLFWwindow *window, double xpos, double ypos)
 {
+    plotter->handleMouseMovement(window, xpos, ypos); 
     if (isDragging)
     {
         // Calculate the mouse's offset since the last frame
@@ -287,8 +277,9 @@ void processInput(GLFWwindow *window)
     {
         debug = !debug;
         debugKeyPressed = true;
-        // Add a new metaball
-        srand(glfwGetTime());
+        // Now we draw circles
+        fourierDrawer->initializeCoefficients(computeFourierCoefficients(plotter->path, 10)); 
+        
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE)
     {
