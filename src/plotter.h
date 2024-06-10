@@ -25,6 +25,23 @@ public:
     Plotter(){
         plotterShader = new Shader("/home/hiatus/Documents/FourierCircleDrawing/src/shaders/regularVert.vs", "/home/hiatus/Documents/FourierCircleDrawing/src/shaders/frag.fs"); 
         renderer = new Object(plotterShader);  
+        // Default path is a square
+        for(int i = 0; i < 100; i++){
+            path.push_back(i); 
+            path.push_back(0); 
+        }
+        for(int i = 0; i < 100; i++){
+            path.push_back(100); 
+            path.push_back(i); 
+        }
+        for(int i = 0; i < 100; i++){
+            path.push_back(100-i); 
+            path.push_back(100); 
+        }
+        for(int i = 0; i < 100; i++){
+            path.push_back(0); 
+            path.push_back(100-i); 
+        }
     }; 
 
     /**

@@ -166,21 +166,23 @@ int main()
         xpos = xpos * (SRC_WIDTH / (2.0 * zoomLevel)) + camera.position.x;
         ypos = ypos * (SRC_HEIGHT / (2.0 * zoomLevel)) + camera.position.y;
 
-        int timeMod = 10; 
+        int timeMod = 100; 
 
+        fourierDrawer->render(glfwGetTime()/(float)10); 
+        
         plotter->renderPoints(); 
-        fourierDrawer->render(glfwGetTime()/(float)timeMod); 
         
         if (fourierDrawer->calculated == true){
             fourierPathDrawer->vertices.push_back(fourierDrawer->tipX); 
             fourierPathDrawer->vertices.push_back(fourierDrawer->tipY);
         }
-        fourierPathDrawer->render(camera.getViewMatrix(), camera.getProjectionMatrix(), GLPOINTS); 
+        fourierPathDrawer->render(camera.getViewMatrix(), camera.getProjectionMatrix(), GL_POINTS); 
         
         std::cout << (int)glfwGetTime()%10 << " " << glfwGetTime() << std::endl; 
         if (((int)glfwGetTime())%timeMod == 0 && glfwGetTime() - (int)glfwGetTime() < 0.01){
             fourierPathDrawer->vertices.clear(); 
         }
+ 
         // gridObject.render(camera.getViewMatrix(), camera.getProjectionMatrix(), GL_LINES);
 
         glfwSwapBuffers(window); // Swaps the color buffer that is used to render to during this render iteration and show it ot the output screen
@@ -278,7 +280,8 @@ void processInput(GLFWwindow *window)
         debug = !debug;
         debugKeyPressed = true;
         // Now we draw circles
-        fourierDrawer->initializeCoefficients(computeFourierCoefficients(plotter->path, 10)); 
+        fourierPathDrawer->vertices.clear(); 
+        fourierDrawer->initializeCoefficients(computeFourierCoefficients(plotter->path, 21)); 
         
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE)

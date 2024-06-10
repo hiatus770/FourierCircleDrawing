@@ -30,7 +30,7 @@ public:
         rotatorShader = new Shader("/home/hiatus/Documents/FourierCircleDrawing/src/shaders/regularVert.vs", "/home/hiatus/Documents/FourierCircleDrawing/src/shaders/frag.fs"); 
         rotatorObject = new Object(rotatorShader);
         magnitude = sqrt(dx * dx + dy * dy); 
-        initialAngle = atanf(dx/dy);
+        initialAngle = atan2(dy, dx); 
     }
 
     /**
