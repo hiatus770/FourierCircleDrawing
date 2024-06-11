@@ -26,7 +26,7 @@ Camera camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::ve
 bool isDragging = false;
 double lastX, lastY;
 bool debug = false; // Turning this to true enables the grid and other debug messaging
-bool autoscale = false;
+bool autoFollow = false;
 
 #include "compute.h"
 #include "particle.h"
@@ -143,7 +143,7 @@ int main()
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-        std::cout << "FPS: " << 1 / deltaTime << std::endl;
+        // std::cout << "FPS: " << 1 / deltaTime << std::endl;
 
         // Clear the screen before we start
         glClearColor(24 / 255.0f, 24 / 255.0f, 24 / 255.0f, 1.0f);
@@ -176,9 +176,14 @@ int main()
             fourierPathDrawer->vertices.push_back(fourierDrawer->tipX); 
             fourierPathDrawer->vertices.push_back(fourierDrawer->tipY);
         }
+
+        if (autoFollow){
+            camera.position.x = fourierDrawer->tipX; 
+            camera.position.y = fourierDrawer->tipY; 
+        }
+
         fourierPathDrawer->render(camera.getViewMatrix(), camera.getProjectionMatrix(), GL_POINTS); 
         
-        std::cout << (int)glfwGetTime()%10 << " " << glfwGetTime() << std::endl; 
         if (((int)glfwGetTime())%timeMod == 0 && glfwGetTime() - (int)glfwGetTime() < 0.01){
             fourierPathDrawer->vertices.clear(); 
         }
@@ -209,12 +214,12 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 
     // Clamp the zoom level to a range
     double minVal = 0.01;
-    double maxVal = 100.0;
+    double maxVal = 1000.0;
     newZoomLevel = std::max(minVal, newZoomLevel);
     newZoomLevel = std::min(maxVal, newZoomLevel);
 
     // Set the new zoom level
-    if (autoscale)
+    if (autoFollow)
     {
         zoomLevel = newZoomLevel;
         DELTA_L = SRC_WIDTH / (COUNT * zoomLevel);
@@ -229,7 +234,6 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 // Mouse button callback
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 {
-    plotter->handleMouseInput(window, button, action, mods); 
     if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
         isDragging = true;
@@ -240,13 +244,13 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
     {
         isDragging = false;
     }
+    plotter->handleMouseInput(window, button, action, mods); 
 }
 
 // Mouse movement callback
 void mouse_callback(GLFWwindow *window, double xpos, double ypos)
 {
-    plotter->handleMouseMovement(window, xpos, ypos); 
-    if (isDragging)
+    if (isDragging && !autoFollow)
     {
         // Calculate the mouse's offset since the last frame
         double dx = xpos - lastX;
@@ -260,6 +264,7 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos)
         lastX = xpos;
         lastY = ypos;
     }
+    plotter->handleMouseMovement(window, xpos, ypos); 
 }
 
 /**
@@ -268,7 +273,7 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos)
  * @param window
  */
 bool debugKeyPressed = false;
-bool autoScaleKeyPressed = false;
+bool autoFollowKeyPressed = false;
 void processInput(GLFWwindow *window)
 {
     // // Function is used as follows player.processKeyboard(ENUM, deltaTime);
@@ -288,13 +293,14 @@ void processInput(GLFWwindow *window)
     {
         debugKeyPressed = false;
     }
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && autoScaleKeyPressed == false)
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && autoFollowKeyPressed == false)
     {
-        autoscale = !autoscale;
-        autoScaleKeyPressed = true;
+        autoFollow = !autoFollow;
+        autoFollowKeyPressed = true;
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE)
     {
-        autoScaleKeyPressed = false;
+        autoFollowKeyPressed = false;
     }
+
 }

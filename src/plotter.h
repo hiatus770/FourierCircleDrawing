@@ -15,7 +15,7 @@ enum state {
 class Plotter{
 public: 
     state plotterState = REST; 
-    std::vector<float> path; 
+    std::vector<float> path = {}; 
     std::pair<double, double> lastMousePosition; 
     std::pair<double, double> currentMousePosition; 
     std::pair<int, int> mouseState; // First is current, second is previous mouse state, 1 is clicked, 0 is not clicked 
@@ -26,22 +26,22 @@ public:
         plotterShader = new Shader("/home/hiatus/Documents/FourierCircleDrawing/src/shaders/regularVert.vs", "/home/hiatus/Documents/FourierCircleDrawing/src/shaders/frag.fs"); 
         renderer = new Object(plotterShader);  
         // Default path is a square
-        for(int i = 0; i < 100; i++){
-            path.push_back(i); 
-            path.push_back(0); 
-        }
-        for(int i = 0; i < 100; i++){
-            path.push_back(100); 
-            path.push_back(i); 
-        }
-        for(int i = 0; i < 100; i++){
-            path.push_back(100-i); 
-            path.push_back(100); 
-        }
-        for(int i = 0; i < 100; i++){
-            path.push_back(0); 
-            path.push_back(100-i); 
-        }
+        // for(int i = 0; i < 100; i++){
+        //     path.push_back(i); 
+        //     path.push_back(0); 
+        // }
+        // for(int i = 0; i < 100; i++){
+        //     path.push_back(100); 
+        //     path.push_back(i); 
+        // }
+        // for(int i = 0; i < 100; i++){
+        //     path.push_back(100-i); 
+        //     path.push_back(100); 
+        // }
+        // for(int i = 0; i < 100; i++){
+        //     path.push_back(0); 
+        //     path.push_back(100-i); 
+        // }
     }; 
 
     /**
@@ -75,7 +75,7 @@ public:
             path.clear(); 
         }
 
-        mouseState.second = mouseState.second;      
+        mouseState.second = mouseState.first;      
     }
 
     void handleMouseMovement(GLFWwindow *window, double xPosition, double yPosition){ 
@@ -85,9 +85,10 @@ public:
         std::pair<float, float> convertedCoordinates = convertMouseCoordinateToScreenCoordinate(currentMousePosition); 
 
         // Do mouse stuff here
-        if (plotterState == DRAW && (lastMousePosition.first != currentMousePosition.first || lastMousePosition.second != currentMousePosition.second)){
+        if (plotterState == DRAW && mouseState.second != 0 && (lastMousePosition.first != currentMousePosition.first || lastMousePosition.second != currentMousePosition.second || true)){
             path.push_back(convertedCoordinates.first); 
             path.push_back(convertedCoordinates.second); 
+            std::cout << convertedCoordinates.first << " " << convertedCoordinates.second << "\n";
         }
 
         lastMousePosition.first = currentMousePosition.first;
@@ -108,8 +109,14 @@ public:
     }
 
     void renderPoints(){
-        renderer->vertices = path; 
-        renderer->render(camera.getViewMatrix(), camera.getProjectionMatrix(), GL_POINTS); 
+        if (path.size() <= 1){
+            return; 
+        }
+        renderer->vertices.clear(); 
+        for(int i = 0; i < path.size(); i++){
+            renderer->vertices.push_back(path[i]); 
+        }
+        renderer->render(camera.getViewMatrix(), camera.getProjectionMatrix(), GL_LINES); 
     }
 
 }; 

@@ -21,7 +21,9 @@ std::vector<std::pair<float, float>> computeFourierCoefficients(std::vector<floa
     } 
 
     std::vector<std::pair<float, float>> function;
+    
     for(int i = 0; i < path.size(); i+=2){
+        
         function.push_back({path[i], path[i+1]}); 
     }
 

@@ -77,7 +77,7 @@ public:
         /* Drawing the arrow for each of the circles, rotating a vector as wel*/  
 
         glm::vec2 deltaVec = getRotatorTip(t);  
-        float scaler = 7.0f; 
+        float scaler = 8.0f; 
         positions.push_back(deltaVec.x); 
         positions.push_back(deltaVec.y); 
         positions.push_back(x); 
