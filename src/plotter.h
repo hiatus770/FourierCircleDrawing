@@ -26,22 +26,22 @@ public:
         plotterShader = new Shader("/home/hiatus/Documents/FourierCircleDrawing/src/shaders/regularVert.vs", "/home/hiatus/Documents/FourierCircleDrawing/src/shaders/frag.fs"); 
         renderer = new Object(plotterShader);  
         // Default path is a square
-        // for(int i = 0; i < 100; i++){
-        //     path.push_back(i); 
-        //     path.push_back(0); 
-        // }
-        // for(int i = 0; i < 100; i++){
-        //     path.push_back(100); 
-        //     path.push_back(i); 
-        // }
-        // for(int i = 0; i < 100; i++){
-        //     path.push_back(100-i); 
-        //     path.push_back(100); 
-        // }
-        // for(int i = 0; i < 100; i++){
-        //     path.push_back(0); 
-        //     path.push_back(100-i); 
-        // }
+        for(int i = 0; i < 100; i++){
+            path.push_back(i + 100); 
+            path.push_back(0 + 100); 
+        }
+        for(int i = 0; i < 100; i++){
+            path.push_back(100 + 100); 
+            path.push_back(i + 100); 
+        }
+        for(int i = 0; i < 100; i++){
+            path.push_back(100-i + 100); 
+            path.push_back(100 + 100); 
+        }
+        for(int i = 0; i < 100; i++){
+            path.push_back(0 + 100); 
+            path.push_back(100-i + 100); 
+        }
     }; 
 
     /**
@@ -113,8 +113,11 @@ public:
             return; 
         }
         renderer->vertices.clear(); 
-        for(int i = 0; i < path.size(); i++){
+        for(int i = 0; i < path.size() - 4; i+=2){
             renderer->vertices.push_back(path[i]); 
+            renderer->vertices.push_back(path[i+1]); 
+            renderer->vertices.push_back(path[i+2]); 
+            renderer->vertices.push_back(path[i+3]); 
         }
         renderer->render(camera.getViewMatrix(), camera.getProjectionMatrix(), GL_LINES); 
     }
