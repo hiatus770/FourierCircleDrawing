@@ -109,7 +109,7 @@ public:
     }
 
     void renderPoints(){
-        if (path.size() <= 1){
+        if (path.size() <= 4){
             return; 
         }
         renderer->vertices.clear(); 
