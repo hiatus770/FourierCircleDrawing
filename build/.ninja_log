@@ -1,6 +1,4 @@
 # ninja log v6
-5952	6231	1718150700637725715	GraphicsStuff	79e82869de252a23
-5	5952	1718150694690993415	CMakeFiles/GraphicsStuff.dir/src/main.cpp.o	ad1ce7a1daf6f72a
-2	258	1718120210262515881	CMakeFiles/GraphicsStuff.dir/src/glad.c.o	aa74aecd1a3023c
-3	3591	1718198558366112692	CMakeFiles/GraphicsStuff.dir/src/main.cpp.o	ad1ce7a1daf6f72a
 3591	3709	1718198561952780178	GraphicsStuff	79e82869de252a23
+3	3591	1718198558366112692	CMakeFiles/GraphicsStuff.dir/src/main.cpp.o	ad1ce7a1daf6f72a
+2	258	1718120210262515881	CMakeFiles/GraphicsStuff.dir/src/glad.c.o	aa74aecd1a3023c
